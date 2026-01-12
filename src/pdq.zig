@@ -3,6 +3,7 @@ const sort = std.sort;
 
 const pdq = sort.pdq;
 const pdqContext = sort.pdqContext;
+const sorter = std.mem.sort;
 
 pub fn printTesting(writer: *std.Io.Writer) !void {
     try writer.write("Testing pdq sort.\n");

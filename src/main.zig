@@ -1,5 +1,7 @@
 const std = @import("std");
 const Io = std.Io;
+const sort = @import("sort.zig");
+const x = @import("logPartition.zig");
 
 pub fn main(init: std.process.Init) !void {
     // Prints to stderr, unbuffered, ignoring potential errors.
@@ -26,5 +28,11 @@ pub fn main(init: std.process.Init) !void {
 
     _ = try stdout_writer.write("Hello, world!\n");
 
-    try stdout_writer.flush(); // Don't forget to flush!
+    std.MultiArrayList(comptime T: type)
+
+    var array: [10]u32 = .{ 9, 7, 5, 3, 1, 0, 2, 4, 6, 8 };
+    sort.sort(u32, &array, {}, std.sort.asc(u32));
+
+    const a = x.Partition.logBlockRead()
+        try stdout_writer.flush(); // Don't forget to flush!
 }
