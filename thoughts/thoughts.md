@@ -85,52 +85,52 @@ pub fn sortContext(start: usize, end: usize, context: anytype) void {
 **Possible algorithms to consider:
 
 1. (Logsort)[https://github.com/aphitorite/Logsort]
-  - QuickSort variant
-  - O(n log n) average case time complexity (worst case depends on partitioning scheme) (sayhisort author alledges it degrages to O(n^2) in worst case)
-  - O(log n) space complexity (in practice a smaller constant factor than Wikisort)
-  - non adaptive, usually fastest on random data sets but slower on partially sorted data sets than adaptive algorithms
-  - The C implementation appears to be much faster when compiled with clang than gcc
-  - MIT License
-  - [Wiki entry](https://sortingalgos.miraheze.org/wiki/Logsort)
+    - QuickSort variant
+    - O(n log n) average case time complexity (worst case depends on partitioning scheme) (sayhisort author alledges it degrages to O(n^2) in worst case)
+    - O(log n) space complexity (in practice a smaller constant factor than Wikisort)
+    - non adaptive, usually fastest on random data sets but slower on partially sorted data sets than adaptive algorithms
+    - The C implementation appears to be much faster when compiled with clang than gcc
+    - [Wiki entry](https://sortingalgos.miraheze.org/wiki/Logsort)
+    - MIT License
  
 2. (Wikisort)[https://github.com/BonzaiThePenguin/WikiSort]
-  - Block Merge Sort variant
-  - O(n log n) time complexity
-  - O(1) space complexity (512 element scratch space) (this scratch space has been notes to be a stack overflow risk for Tigerbeetle)
-  - incredibly adaptive, very fast on partially sorted data sets due to some magic with the cache I believe
-  - MIT License
-  - current std.sort implementation is based on this algorithm
-	- not as fast as the other algorithms here, and scratch space is in practice larger than the O(log n) of other algorithms
-	- [Wiki entry](https://sortingalgos.miraheze.org/wiki/WikiSort) 
+    - Block Merge Sort variant
+    - O(n log n) time complexity
+    - O(1) space complexity (512 element scratch space) (this scratch space has been notes to be a stack overflow risk for Tigerbeetle)
+    - incredibly adaptive, very fast on partially sorted data sets due to some magic with the cache I believe
+    - current std.sort implementation is based on this algorithm
+    - not as fast as the other algorithms here, and scratch space is in practice larger than the O(log n) of other algorithms
+    - [Wiki entry](https://sortingalgos.miraheze.org/wiki/WikiSort) 
+    - MIT License
 
 3. (Blitsort)[https://github.com/scandum/blitsort]
-  - rotate quick/merge sort hybrid variant
-  - O(n log^2 n) average and worst case time complexity (in practice faster than Wikisort)
-  - O(1) variable 32-512 element scratch space depending on performance requirements
-  - adaptive
-  - Unlicense license
+    - rotate quick/merge sort hybrid variant
+    - O(n log^2 n) average and worst case time complexity (in practice faster than Wikisort)
+    - O(1) variable 32-512 element scratch space depending on performance requirements
+    - adaptive
+    - Unlicense license
 
 4. (Sayhisort)[https://github.com/grafi-tt/sayhisort]
-  - Block Merge Sort variant (based on GrailSort) 
-  - O(n log n) time complexity
-  - truely in place O(1) space complexity (this could be ideal as it removes the stack overflow risk of Wikisort and simplifies the api compared to algorithms requiring scratch space)
-  - appears somewhat adaptive
-  - probably going to be the hardest to implement of the algorithms here due to its complexity
-  - CC0-1.0 license
+    - Block Merge Sort variant (based on GrailSort) 
+    - O(n log n) time complexity
+    - truely in place O(1) space complexity (this could be ideal as it removes the stack overflow risk of Wikisort and simplifies the api compared to algorithms requiring scratch space)
+    - appears somewhat adaptive
+    - probably going to be the hardest to implement of the algorithms here due to its complexity
+    - CC0-1.0 license
 
 5. (ForSort)[https://github.com/stew675/ForSort]
-  - Block Merge Sort variant
-  - O(n log n) time complexity
-  - O(log n) space complexity
-  - adaptive
-  - LGPL-2.1 license (Likely incompatible with Zig stdlib but authors permission could be sought)
+    - Block Merge Sort variant
+    - O(n log n) time complexity
+    - O(log n) space complexity
+    - adaptive
+    - LGPL-2.1 license (Likely incompatible with Zig stdlib but authors permission could be sought)
 
 6. (Helium Sort)[https://git.a-a.dev/amari/Helium-Sort]
-  - Block Merge Sort variant
-  - O(n log n) time complexity
-  - O(1) space complexity there is a true in place variant but it is slightly slower, so benchmarking is required here
-  - adaptive
-  - MIT Licenseg
+    - Block Merge Sort variant
+    - O(n log n) time complexity
+    - O(1) space complexity there is a true in place variant but it is slightly slower, so benchmarking is required here
+    - adaptive
+    - MIT Licenseg
 
 7. (DustSort)[https://github.com/bzyjin/dustsort]
     - Block Merge Sort variant
