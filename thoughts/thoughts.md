@@ -133,8 +133,8 @@ pub fn sortContext(start: usize, end: usize, context: anytype) void {
   - MIT Licenseg
 
 7. (DustSort)[https://github.com/bzyjin/dustsort]
-  - Block Merge Sort variant
-  - O(n log n) time complexity
-  - O(1) space complexity (with a fixed sized buffer - I'm unsure of the size currently)
-  - adaptive
-  - MIT License
+    - Block Merge Sort variant
+    - O(n log n) time complexity
+    - O(1) space complexity (with a fixed sized buffer - I'm unsure of the size currently)
+    - adaptive
+    - MIT License
