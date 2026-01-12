@@ -130,4 +130,11 @@ pub fn sortContext(start: usize, end: usize, context: anytype) void {
   - O(n log n) time complexity
   - O(1) space complexity there is a true in place variant but it is slightly slower, so benchmarking is required here
   - adaptive
+  - MIT Licenseg
+
+7. (DustSort)[https://github.com/bzyjin/dustsort]
+  - Block Merge Sort variant
+  - O(n log n) time complexity
+  - O(1) space complexity (with a fixed sized buffer - I'm unsure of the size currently)
+  - adaptive
   - MIT License
