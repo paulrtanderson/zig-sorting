@@ -20,6 +20,8 @@ Thus likely the only viable algorithm for the general context variant is one tha
 
 actually actually it could still work for auxiliary space sorts if we provide a copyFromScratch and copyToScratch functions in the context, this would allow the user to implement these functions to handle multiple arrays, however this is getting quite complex. The user would have to implement 4 functions: lessThan, swap, copyToScratch, copyFromScratch, their implementation would have to be quite specific to the data structure being sorted, for example for MultiArrayList the copyToScratch function the scratch space would have to be either a multi array itself, or a struct containing multiple arrays, and the copy functions would have to copy all the relevant elements to and from the scratch space.
 
+actually actually actually we need more methods, we would need a memcopy and memmove equivalent, as some algorithms need to copy ranges of elements to/from scratch space, not just single elements.
+
 perhaps the scratch versions could have an api something like this?
 
 ```zig
@@ -138,3 +140,7 @@ pub fn sortContext(start: usize, end: usize, context: anytype) void {
     - O(1) space complexity (with a fixed sized buffer - I'm unsure of the size currently)
     - adaptive
     - MIT License
+
+8. (Lazy lograil)
+    - Don't know much about this one yet, need to research it more
+    - link to java implementation in the studio discord server
