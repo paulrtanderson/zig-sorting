@@ -11,7 +11,7 @@ pub fn GroupResult(comptime T: type) type {
         right_blocks: usize,
         /// Number of leftover "zeros" that didn't form a complete block
         leftover_zeros: usize,
-        /// Number of leftover "ones" that didn't form a complete block
+        /// Number of leftover "ones" that didn't form a complete block TODO: can we just calculate this from leftover_zeros and array length?
         leftover_ones: usize,
     };
 }
@@ -246,6 +246,8 @@ fn checkGroupingBlocked(
     pivot: T,
     comptime lessThan: fn (void, T, T) bool,
 ) !void {
+    if (input.len == 0) return;
+
     var buffer: [64]T = undefined;
 
     const needed_buffer_size = 2 * std.math.log2_int_ceil(usize, input.len);
@@ -286,6 +288,7 @@ fn checkGroupingStable(
     pivot: T,
     comptime lessThan: fn (void, T, T) bool,
 ) !void {
+    if (input.len == 0) return;
     const tagged_array = try allocator.alloc(Tagged(T), input.len);
     defer allocator.free(tagged_array);
     var buffer: [16]Tagged(T) = undefined;
@@ -336,4 +339,19 @@ test "group strings into blocks" {
     try checkGroupingStable(std.testing.allocator, []const u8, &input, pivot, stringLessThan);
 }
 
-test "fuzz test" {}
+test "fuzz grouping" {
+    const Context = struct {
+        allocator: std.mem.Allocator = std.testing.allocator,
+        pivot: u8 = 128,
+        comptime lessThanFn: fn (void, u8, u8) bool = std.sort.asc(u8),
+
+        fn testOne(context: @This(), input: []const u8) anyerror!void {
+            const mutable_input = try context.allocator.dupe(u8, input);
+            defer context.allocator.free(mutable_input);
+
+            try checkGroupingBlocked(u8, mutable_input, context.pivot, context.lessThanFn);
+            try checkGroupingStable(context.allocator, u8, mutable_input, context.pivot, context.lessThanFn);
+        }
+    };
+    try std.testing.fuzz(Context{}, Context.testOne, .{});
+}
