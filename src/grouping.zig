@@ -59,6 +59,10 @@ pub fn groupIntoBlocks(
             if (fragment_size > 0) {
                 const dest = array[insert_pos + block_len .. insert_pos + block_len + fragment_size];
                 const source = array[insert_pos .. insert_pos + fragment_size];
+
+                // guarrantee no overlap
+                std.debug.assert(block_len > fragment_size);
+
                 @memcpy(dest, source);
             }
 
@@ -110,6 +114,12 @@ fn groupSmall(
 
     // Copy ones after zeros
     @memcpy(array[l .. l + r], buffer[0..r]);
+
+    // Normally we would just be able to return l and r as leftover counts, but if
+    // either of them equal the buffer size, that means we have a complete block
+    // and should report zero leftovers instead. this does this branchlessly.
+    // does not affect correctness of entire partition algorithm, only correctnesss of the metadata returned for this stage.
+    // TODO: investigate if this is actually beneficial in practice over just returning l and r directly.
 
     const is_full_left = @intFromBool(l == buffer.len);
     const is_full_right = @intFromBool(r == buffer.len);
@@ -325,3 +335,5 @@ test "group strings into blocks" {
     try checkGroupingBlocked([]const u8, &input, pivot, stringLessThan);
     try checkGroupingStable(std.testing.allocator, []const u8, &input, pivot, stringLessThan);
 }
+
+test "fuzz test" {}
