@@ -111,12 +111,16 @@ fn groupSmall(
     // Copy ones after zeros
     @memcpy(array[l .. l + r], buffer[0..r]);
 
+    const is_full_left = @intFromBool(l == buffer.len);
+    const is_full_right = @intFromBool(r == buffer.len);
+    const is_full = is_full_left | is_full_right;
+
     return .{
-        .leftovers_start = array.ptr,
-        .left_blocks = 0,
-        .right_blocks = 0,
-        .leftover_zeros = l,
-        .leftover_ones = r,
+        .leftovers_start = array.ptr + (is_full * buffer.len),
+        .left_blocks = is_full_left,
+        .right_blocks = is_full_right,
+        .leftover_zeros = (1 - is_full) * l,
+        .leftover_ones = (1 - is_full) * r,
     };
 }
 
@@ -203,7 +207,7 @@ pub fn Tagged(comptime T: type) type {
     };
 }
 
-fn checkBlockedIsStable(comptime T: type, result: []Tagged(T), pivot: T, context: anytype, lessThan: fn (context: @TypeOf(context), T, T) bool) !void {
+fn checkBlockedIsStable(comptime T: type, result: []const Tagged(T), pivot: T, context: anytype, lessThan: fn (context: @TypeOf(context), T, T) bool) !void {
     var last_zero_idx: isize = -1;
     var last_one_idx: isize = -1;
 
@@ -228,80 +232,96 @@ fn taggedLessThan(comptime T: type, comptime lessThan: fn (context: void, T, T) 
 
 fn checkGroupingBlocked(
     comptime T: type,
-    comptime size: usize,
-    input: [size]T,
+    input: []T,
     pivot: T,
     comptime lessThan: fn (void, T, T) bool,
 ) !void {
-    var array = input;
-    const buffer_size = 5;
-    var buffer: [buffer_size]T = undefined;
+    var buffer: [64]T = undefined;
 
-    const result = groupIntoBlocks(T, &array, &buffer, pivot, {}, lessThan);
-    const expected_metadata = try checkBlocked(T, &array, buffer_size, pivot, {}, lessThan);
+    const needed_buffer_size = 2 * std.math.log2_int_ceil(usize, input.len);
 
-    try testing.expectEqual(expected_metadata, result);
+    const result = groupIntoBlocks(T, input, buffer[0..needed_buffer_size], pivot, {}, lessThan);
+    const expected_metadata = try checkBlocked(T, input, needed_buffer_size, pivot, {}, lessThan);
+
+    testing.expectEqual(expected_metadata, result) catch |err| {
+        std.debug.print("Grouping metadata mismatch: expected {any}, got {any}\n", .{ expected_metadata, result });
+        return err;
+    };
 }
 
-fn checkGroupingStable(
+fn checkGroupingStableBuffer(
     comptime T: type,
-    comptime size: usize,
-    input: [size]T,
+    input: []T,
+    buffer: []Tagged(T),
+    tagged_array: []Tagged(T),
     pivot: T,
     comptime lessThan: fn (void, T, T) bool,
 ) !void {
-    var tagged_array: [size]Tagged(T) = undefined;
     for (input, 0..) |val, i| {
         tagged_array[i] = .{ .value = val, .original_index = i };
     }
 
-    const buffer_size = 5;
-    var buffer: [buffer_size]Tagged(T) = undefined;
-
     const tagged_pivot = Tagged(T){ .value = pivot, .original_index = undefined };
     const lessThanTagged = taggedLessThan(T, lessThan);
 
-    _ = groupIntoBlocks(Tagged(T), &tagged_array, &buffer, tagged_pivot, {}, lessThanTagged);
+    _ = groupIntoBlocks(Tagged(T), tagged_array, buffer, tagged_pivot, {}, lessThanTagged);
 
-    try checkBlockedIsStable(T, &tagged_array, pivot, {}, lessThan);
+    try checkBlockedIsStable(T, tagged_array, pivot, {}, lessThan);
+}
+
+fn checkGroupingStable(
+    allocator: std.mem.Allocator,
+    comptime T: type,
+    input: []T,
+    pivot: T,
+    comptime lessThan: fn (void, T, T) bool,
+) !void {
+    const tagged_array = try allocator.alloc(Tagged(T), input.len);
+    defer allocator.free(tagged_array);
+    var buffer: [16]Tagged(T) = undefined;
+
+    const needed_buffer_size = 2 * std.math.log2_int_ceil(usize, input.len);
+
+    try checkGroupingStableBuffer(T, input, buffer[0..needed_buffer_size], tagged_array, pivot, lessThan);
 }
 
 test "group i32s into blocks" {
     const size = 20;
-    const input: [size]i32 = .{ 3, 7, 2, 8, 5, 1, 6, 4, 9, 0, 12, 15, 11, 14, 10, 13, 18, 17, 19, 16 };
+    var input: [size]i32 = .{ 3, 7, 2, 8, 5, 1, 6, 4, 9, 0, 12, 15, 11, 14, 10, 13, 18, 17, 19, 16 };
     const lessThanFn = std.sort.asc(i32);
     const pivot: i32 = 10;
-    try checkGroupingBlocked(i32, size, input, pivot, lessThanFn);
-    try checkGroupingStable(i32, size, input, pivot, lessThanFn);
+
+    try checkGroupingBlocked(i32, &input, pivot, lessThanFn);
+    try checkGroupingStable(std.testing.allocator, i32, &input, pivot, lessThanFn);
 }
 
 test "group i32s with all ones" {
     const size = 6;
-    const input: [size]i32 = .{ 5, 6, 7, 8, 9, 10 };
+    var input: [size]i32 = .{ 5, 6, 7, 8, 9, 10 };
     const lessThanFn = std.sort.asc(i32);
     const pivot: i32 = 1; // all elements >= pivot
-    try checkGroupingBlocked(i32, size, input, pivot, lessThanFn);
-    try checkGroupingStable(i32, size, input, pivot, lessThanFn);
+    try checkGroupingBlocked(i32, &input, pivot, lessThanFn);
+    try checkGroupingStable(std.testing.allocator, i32, &input, pivot, lessThanFn);
 }
 
 test "group i32s with all zeros" {
     const size = 6;
-    const input: [size]i32 = .{ -10, -9, -8, -7, -6, -5 };
+    var input: [size]i32 = .{ -10, -9, -8, -7, -6, -5 };
     const lessThanFn = std.sort.asc(i32);
     const pivot: i32 = 0; // all elements < pivot
-    try checkGroupingBlocked(i32, size, input, pivot, lessThanFn);
-    try checkGroupingStable(i32, size, input, pivot, lessThanFn);
+    try checkGroupingBlocked(i32, &input, pivot, lessThanFn);
+    try checkGroupingStable(std.testing.allocator, i32, &input, pivot, lessThanFn);
 }
 
 test "group strings into blocks" {
     const size = 12;
-    const input: [size][]const u8 = .{ "delta", "alpha", "charlie", "bravo", "alpha", "echo", "juliet", "foxtrot", "golf", "hotel", "india", "juliet" };
+    var input: [size][]const u8 = .{ "delta", "alpha", "charlie", "bravo", "alpha", "echo", "juliet", "foxtrot", "golf", "hotel", "india", "juliet" };
     const stringLessThan = struct {
         fn stringLessThan(_: void, lhs: []const u8, rhs: []const u8) bool {
             return std.mem.order(u8, lhs, rhs) == .lt;
         }
     }.stringLessThan;
     const pivot: []const u8 = "foxtrot";
-    try checkGroupingBlocked([]const u8, size, input, pivot, stringLessThan);
-    try checkGroupingStable([]const u8, size, input, pivot, stringLessThan);
+    try checkGroupingBlocked([]const u8, &input, pivot, stringLessThan);
+    try checkGroupingStable(std.testing.allocator, []const u8, &input, pivot, stringLessThan);
 }
